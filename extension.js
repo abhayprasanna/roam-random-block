@@ -17,7 +17,7 @@ function randombutton() { //creates a new left sidebar log button below Daily No
 }
 
 function togglerandom() { //creates the URL for random page or block and opens it
-  random = window.roamAlphaAPI.q('[:find [(rand 1 ?block-uid)] :where [?e :block/page] [?e :block/uid ?block-uid] ]')[0];
+  var random = window.roamAlphaAPI.q('[:find [(rand 1 ?block-uid)] :where [?e :block/page] [?e :block/uid ?block-uid] ]')[0];
   window.roamAlphaAPI.ui.mainWindow
     .openBlock({block:
 				{uid: random[0]}});
