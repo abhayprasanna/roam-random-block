@@ -170,12 +170,15 @@ function getUnvisitedRandomBlock(extensionAPI) {
 
     if (filteredCandidatesForRandomQueue.length === 0) {
       if (pageTitleIfSet) {
-        console.log(`No more linked references to visit for the page named "${pageTitleIfSet}". Will now repeat (in another random order)`);
-        // MAYBE: if here, optionally alert the user that we have visited all the linked refs of the page
-        //   we can do this because when pageTitleIfSet, we get all the backrefs (shuffled). So, if all of them are in VISITED_BLOCK_UIDS, we KNOW that we have visited all in this session
+        // if here, means that we have visited all the linked refs of the page
+        //   we know this because when pageTitleIfSet, we get all the backrefs (shuffled). So, if all of them are in VISITED_BLOCK_UIDS, we KNOW that we have visited all in this session
         //   in contrast, we cannot do that when we're showing global random blocks, because there is (an admittedly small) chance that the random 100 blocks we got were already visited, while there are other blocks which are not visited
-        //   would this be a good or a bad thing? Good because user might want to know if they have cycled through all the blocks
-        //   if we do not want to do this, then we probably can make the code simpler by a lot
+        let cycledThroughAllMessage = `From Random Block Extension:\nFinished cycling through all the linked references for the page "${pageTitleIfSet}" in your current session.\nIf you press the "Random block" button again, will now repeat (in a different random order)\n(you can disable this alert from extension settings)`
+        console.log(cycledThroughAllMessage);
+        let alertWhenFullCycle = extensionAPI.settings.get("alert-when-full-cycle-setting");
+        if (alertWhenFullCycle) {
+          alert(cycledThroughAllMessage);
+        }
       }
       clearState();
       filteredCandidatesForRandomQueue = getCandidatesForRandomQueue(pageTitleIfSet);
@@ -247,7 +250,7 @@ function onload({extensionAPI}) {
                     setTimeout(() => {
                       addAndRemoveButtonsAsRequired(extensionAPI);
                     }, 100);
-                    console.log("Select Changed!", evt); 
+                    // console.log("Select Changed!", evt); 
                   }
                 }
       },
@@ -261,14 +264,26 @@ function onload({extensionAPI}) {
                   placeholder: "Page title here",
                   onChange:    (evt) => { 
                                           clearState();
-                                          console.log("Input Changed!", evt); 
+                                          // console.log("Input Changed!", evt); 
                                         }
                 }
+      },
+      {
+        id:          "alert-when-full-cycle-setting",
+        name:        "Alert when full cycle?",
+        description: "Do you want to get an alert when you cycle through all the linked refs in the current session? (only works when 'Scope to linked ref of particular page' above is set to a page title)",
+        action:      {type: "switch"}
       },
     ]
   };
   extensionAPI.settings.panel.create(panelConfig);
   addAndRemoveButtonsAsRequired(extensionAPI);
+  
+  // set default values for the settings if hasn't ever been set
+  let alertWhenFullCycle = extensionAPI.settings.get("alert-when-full-cycle-setting");
+  if (!(alertWhenFullCycle===true || alertWhenFullCycle===false)){
+    extensionAPI.settings.set("alert-when-full-cycle-setting", true);
+  }
 }
 
 function onunload() {
